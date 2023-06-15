@@ -1,0 +1,16 @@
+name: create-pr
+
+on:
+  workflow_dispatch
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Create PR
+        run: gh pr create -B main -H not-main --title 'Merge branch_to_merge into base_branch' --body 'Created by Github action'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

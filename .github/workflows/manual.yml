@@ -1,0 +1,44 @@
+name: create-mr
+
+env:
+  project-name: test-pages-2
+  branch-name: new-branch10
+
+on:
+  workflow_dispatch
+
+jobs:
+  create-mr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v3
+
+      - name: SSH Setup
+        uses: MrSquaare/ssh-setup-action@v2.0.1
+        with:
+          host: gitlab.com
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Pull KiCad repository
+        run: |
+          git clone "git@gitlab.com:pborcin/${{ env.project-name }}.git"
+          git config --global user.email "${{ secrets.EMAIL }}"
+          git config --global user.name "${{ secrets.NAME }}"
+
+      - name: Create merging branch and commit
+        working-directory: ${{ env.project-name }}
+        run: |
+          git checkout -b ${{ env.branch-name }}
+          mkdir -p ./packages/com.github.espressif.kicad-library
+          cp ../resources/icon.png ./packages/com.github.espressif.kicad-library/icon.png
+          cp ../metadata.json ./packages/com.github.espressif.kicad-library/metadata.json
+          git add ./packages/com.github.espressif.kicad-library/icon.png ./packages/com.github.espressif.kicad-library/metadata.json
+          git commit -m "add com.github.espressif.kicad-library"
+          git push --set-upstream origin ${{ env.branch-name }}
+
+      - name: Create merge request to KiCad repository
+        working-directory: ${{ env.project-name }}
+        run: |
+          curl --request POST --header "PRIVATE-TOKEN: ${{ secrets.TOKEN }}" "https://gitlab.com/api/v4/projects/47862402/merge_requests?source_branch=${{ env.branch-name }}&target_branch=main&title=add%20com.github.espressif.kicad-library&target_project_id=41074427" | tee curl_output
+          grep -Po 'https://gitlab.com/[^"]*merge_requests/\d+' curl_output >> $GITHUB_STEP_SUMMARY

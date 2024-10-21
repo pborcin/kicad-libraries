@@ -2,7 +2,7 @@ name: create-mr
 
 env:
   project-name: test-pages-2
-  branch-name: new-branch10
+  branch-name: new-branch11
 
 on:
   workflow_dispatch
